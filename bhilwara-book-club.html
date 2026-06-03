@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bhilwara Book Club — Est. 2018</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --paper: #f5f0e8;
+    --aged: #e8dfc8;
+    --rust: #b5451b;
+    --gold: #c9943a;
+    --sage: #5a7a5e;
+    --faded: #8a7a62;
+    --border: #c8b89a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(201,148,58,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(90,122,94,0.06) 0%, transparent 60%);
+  }
+  .wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 2rem; }
+
+  /* HEADER */
+  header { border-bottom: 2px solid var(--border); padding: 3.5rem 0 2.5rem; margin-bottom: 3rem; }
+  .header-inner { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
+  .est { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--rust); margin-bottom: 0.4rem; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 700; line-height: 1.05; }
+  h1 em { font-style: italic; color: var(--rust); }
+  .tagline { font-family: 'DM Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; color: var(--faded); margin-top: 0.6rem; }
+  .stats-block { text-align: right; }
+  .big-num { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 700; color: var(--rust); line-height: 1; }
+  .big-label { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faded); }
+  .anniversary-ribbon { display: inline-block; background: var(--rust); color: var(--paper); font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; padding: 0.3rem 0.8rem; margin-top: 0.5rem; }
+
+  /* CONTROLS */
+  .search-wrap { margin-bottom: 1.2rem; }
+  .search-input { width: 100%; font-family: 'DM Mono', monospace; font-size: 0.8rem; letter-spacing: 0.08em; padding: 0.8rem 1.2rem; border: 1px solid var(--border); background: transparent; color: var(--ink); outline: none; transition: border-color 0.2s; }
+  .search-input::placeholder { color: var(--border); }
+  .search-input:focus { border-color: var(--rust); }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; }
+  .filter-btn { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.4rem 1rem; border: 1px solid var(--border); background: transparent; color: var(--faded); cursor: pointer; transition: all 0.2s; }
+  .filter-btn:hover, .filter-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* ERA */
+  .era { margin-bottom: 3.5rem; }
+  .era-header { display: flex; align-items: baseline; gap: 1.2rem; margin-bottom: 1.5rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border); }
+  .era-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-style: italic; }
+  .era-count { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--faded); }
+
+  /* BOOK GRID */
+  .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.5rem; }
+
+  .book-card {
+    display: flex; flex-direction: column;
+    cursor: default;
+    transition: transform 0.2s;
+  }
+  .book-card:hover { transform: translateY(-4px); }
+
+  .cover-wrap {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: var(--aged);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 0.7rem;
+    flex-shrink: 0;
+  }
+  .cover-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .cover-wrap img.loaded { opacity: 1; }
+  .cover-placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 0.8rem; text-align: center;
+    background: var(--aged);
+  }
+  .cover-placeholder .ph-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-style: italic;
+    color: var(--border); line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+  .cover-placeholder .ph-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem; letter-spacing: 0.08em;
+    color: var(--faded); line-height: 1.4;
+  }
+
+  .book-info { flex: 1; }
+  .book-num { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--border); letter-spacing: 0.1em; margin-bottom: 0.25rem; }
+  .book-title { font-family: 'Playfair Display', serif; font-size: 0.82rem; font-style: italic; line-height: 1.3; color: var(--ink); margin-bottom: 0.2rem; }
+  .book-author { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.06em; color: var(--faded); margin-bottom: 0.25rem; }
+  .book-date { font-family: 'DM Mono', monospace; font-size: 0.55rem; letter-spacing: 0.05em; color: var(--gold); }
+  .book-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.12rem 0.35rem; margin-top: 0.3rem; }
+  .tag-short { background: rgba(90,122,94,0.12); color: var(--sage); }
+  .tag-hindi { background: rgba(181,69,27,0.1); color: var(--rust); }
+  .tag-themed { background: rgba(201,148,58,0.12); color: var(--gold); }
+  .tag-nonfiction { background: rgba(26,18,8,0.07); color: var(--faded); }
+
+  /* FOOTER */
+  footer { border-top: 1px solid var(--border); padding: 2rem 0; margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+  footer p { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; color: var(--faded); }
+  footer a { color: var(--rust); text-decoration: none; }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 540px) {
+    .book-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .header-inner { flex-direction: column; align-items: flex-start; }
+    .stats-block { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="header-inner">
+      <div class="brand-block">
+        <div class="est">Est. 2018 · Bhilwara, Rajasthan</div>
+        <h1>Bhilwara<br><em>Book Club</em></h1>
+        <div class="tagline">Reading together since April 2018</div>
+      </div>
+      <div class="stats-block">
+        <div class="big-num">65</div>
+        <div class="big-label">Books Read</div>
+        <div class="anniversary-ribbon">8 Years · April 23, 2026</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="search-wrap">
+    <input class="search-input" type="text" placeholder="Search by title or author..." id="searchInput" oninput="filterSearch()">
+  </div>
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterEra('all',this)">All Years</button>
+    <button class="filter-btn" onclick="filterEra('2018',this)">2018–2020</button>
+    <button class="filter-btn" onclick="filterEra('2020',this)">2020–2021</button>
+    <button class="filter-btn" onclick="filterEra('2021',this)">2021–2022</button>
+    <button class="filter-btn" onclick="filterEra('2022',this)">2022–2023</button>
+    <button class="filter-btn" onclick="filterEra('2023',this)">2023–2024</button>
+    <button class="filter-btn" onclick="filterEra('2024',this)">2024–2025</button>
+    <button class="filter-btn" onclick="filterEra('2025',this)">2025–2026</button>
+  </div>
+
+  <div id="all-eras"></div>
+
+  <footer>
+    <p>Bhilwara Book Club · Est. April 2018 · Bhilwara, Rajasthan</p>
+    <p><a href="https://www.instagram.com/bhilwarabookclub/" target="_blank">@bhilwarabookclub</a></p>
+  </footer>
+</div>
+
+<script>
+// ── BOOK DATA ──────────────────────────────────────────────────
+const BOOKS = [
+  // 2018–2020
+  { n:"001", era:"2018", title:"Sea of Poppies", author:"Amitav Ghosh" },
+  { n:"002", era:"2018", title:"River of Smoke", author:"Amitav Ghosh" },
+  { n:"003", era:"2018", title:"The English Patient", author:"Michael Ondaatje" },
+  { n:"004", era:"2018", title:"The Palace of Illusions", author:"Chitra Banerjee Divakaruni" },
+  { n:"005", era:"2018", title:"Forest of Enchantments", author:"Chitra Banerjee Divakaruni" },
+  { n:"006", era:"2018", title:"The Secret Lives of Bees", author:"Sue Monk Kidd" },
+  { n:"007", era:"2018", title:"The Chosen", author:"Chaim Potok" },
+  { n:"008", era:"2018", title:"The Book Thief", author:"Markus Zusak" },
+  { n:"009", era:"2018", title:"A Tree Grows in Brooklyn", author:"Betty Smith" },
+  { n:"010", era:"2018", title:"The Old Devils", author:"Kingsley Amis" },
+  { n:"011", era:"2018", title:"Eleanor Oliphant is Completely Fine", author:"Gail Honeyman" },
+  { n:"012", era:"2018", title:"Half of a Yellow Sun", author:"Chimamanda Ngozi Adichie" },
+  { n:"013", era:"2018", title:"Little Fires Everywhere", author:"Celeste Ng" },
+  { n:"014", era:"2018", title:"The Dutch House", author:"Ann Patchett" },
+  { n:"015", era:"2018", title:"Where the Crawdads Sing", author:"Delia Owens" },
+  { n:"016", era:"2018", title:"The Forty Rules of Love", author:"Elif Shafak" },
+  { n:"017", era:"2018", title:"Bade Ghar Ki Bahu", author:"Munshi Premchand", tag:"hindi" },
+  { n:"018", era:"2018", title:"Neeche Ke Kapde", author:"Amrita Pritam", tag:"hindi" },
+  { n:"019", era:"2018", title:"Jarein", author:"Ismat Chugtai", tag:"hindi" },
+  { n:"020", era:"2018", title:"Short Stories", author:"Rabindranath Tagore", tag:"short" },
+  { n:"021", era:"2018", title:"Wants", author:"Grace Paley", tag:"short" },
+  { n:"022", era:"2018", title:"The Use of Force", author:"William Carlos Williams", tag:"short" },
+  { n:"023", era:"2018", title:"The Tell-Tale Heart", author:"Edgar Allan Poe", tag:"short" },
+  { n:"024", era:"2018", title:"The Night Driver", author:"Italo Calvino", tag:"short" },
+  { n:"025", era:"2018", title:"The Laugher", author:"Heinrich Böll", tag:"short" },
+  // 2020–2021
+  { n:"026", era:"2020", title:"The Lost Girls of Paris", author:"Pam Jenoff", date:"June 4, 2020" },
+  { n:"027", era:"2020", title:"Nine Lives", author:"William Dalrymple", date:"July 19, 2020", tag:"nonfiction" },
+  { n:"028", era:"2020", title:"The Housekeeper and the Professor", author:"Yoko Ogawa", date:"August 9, 2020" },
+  { n:"029", era:"2020", title:"My Cousin Rachel", author:"Daphne du Maurier", date:"September 6, 2020" },
+  { n:"030", era:"2020", title:"Rebecca", author:"Daphne du Maurier", date:"October 13, 2020" },
+  { n:"031", era:"2020", title:"The Silent Patient", author:"Alex Michaelides", date:"November 8, 2020" },
+  { n:"032", era:"2020", title:"The Discomfort of Evening", author:"Marieke Lucas Rijneveld", date:"January 26, 2021" },
+  { n:"033", era:"2020", title:"Sapiens", author:"Yuval Noah Harari", date:"April 4, 2021", tag:"nonfiction" },
+  // 2021–2022
+  { n:"034", era:"2021", title:"The Stand / The Shining / Misery / The Green Mile", author:"Stephen King", tag:"themed" },
+  { n:"035", era:"2021", title:"The Midnight Library", author:"Matt Haig" },
+  { n:"036", era:"2021", title:"Travels with Charley in Search of America", author:"John Steinbeck", tag:"nonfiction" },
+  { n:"037", era:"2021", title:"The One Hundred Years of Lenni and Margot", author:"Marianne Cronin" },
+  { n:"038", era:"2021", title:"The Nightingale", author:"Kristin Hannah" },
+  { n:"039", era:"2021", title:"Bewilderment", author:"Richard Powers" },
+  { n:"040", era:"2021", title:"Anxious People", author:"Fredrik Backman" },
+  { n:"041", era:"2021", title:"Love Marriage", author:"Monica Ali" },
+  // 2022–2023
+  { n:"042", era:"2022", title:"The Giver of Stars", author:"JoJo Moyes", date:"July 2022" },
+  { n:"043", era:"2022", title:"Flowers for Algernon", author:"Daniel Keyes", date:"August 2022" },
+  { n:"044", era:"2022", title:"The Island of Missing Trees", author:"Elif Shafak", date:"September 2022" },
+  { n:"045", era:"2022", title:"The Stationery Shop of Tehran", author:"Marjan Kamali", date:"November 2022" },
+  { n:"046", era:"2022", title:"Independence", author:"Chitra Banerjee Divakaruni", date:"February 2023" },
+  { n:"047", era:"2022", title:"Book of Choice", author:"Member's Own Pick", date:"March 2023", tag:"themed" },
+  // 2023–2024
+  { n:"048", era:"2023", title:"Remarkably Bright Creatures", author:"Shelby Van Pelt", date:"July 2023" },
+  { n:"049", era:"2023", title:"The Guide", author:"R.K. Narayan", date:"September 2023" },
+  { n:"050", era:"2023", title:"The Devotion of Suspect X", author:"Keigo Higashino", date:"October 2023" },
+  { n:"051", era:"2023", title:"Fahrenheit 451", author:"Ray Bradbury", date:"January 2024" },
+  { n:"052", era:"2023", title:"Lessons in Chemistry", author:"Bonnie Garmus", date:"February 2024" },
+  { n:"053", era:"2023", title:"Poetry", author:"Various Poets", date:"March 2024", tag:"themed" },
+  // 2024–2025
+  { n:"054", era:"2024", title:"The Giving Tree", author:"Shel Silverstein" },
+  { n:"055", era:"2024", title:"Dark Matter", author:"Blake Crouch" },
+  { n:"056", era:"2024", title:"The Positronic Man", author:"Isaac Asimov & Robert Silverberg" },
+  { n:"057", era:"2024", title:"The Teashop on the Corner", author:"Milly Johnson" },
+  { n:"058", era:"2024", title:"Little Women", author:"Louisa May Alcott" },
+  { n:"059", era:"2024", title:"First Lie Wins", author:"Ashley Elston" },
+  // 2025–2026
+  { n:"060", era:"2025", title:"Heart Lamp & Selected Stories", author:"Banu Mushtaq", tag:"short" },
+  { n:"061", era:"2025", title:"My Friends", author:"Fredrik Backman" },
+  { n:"062", era:"2025", title:"The Postman Always Rings Twice", author:"James M. Cain" },
+  { n:"063", era:"2025", title:"The Inimitable Jeeves", author:"P.G. Wodehouse" },
+  { n:"064", era:"2025", title:"My Husband's Wife", author:"Alice Feeney" },
+  { n:"065", era:"2025", title:"The Lonely Hearts Book Club", author:"Lucy Gilmore" },
+];
+
+const ERA_META = {
+  "2018": { label: "2018 – 2020", sub: "25 reads · Founding years" },
+  "2020": { label: "2020 – 2021", sub: "8 reads" },
+  "2021": { label: "2021 – 2022", sub: "8 reads" },
+  "2022": { label: "2022 – 2023", sub: "6 reads" },
+  "2023": { label: "2023 – 2024", sub: "6 reads" },
+  "2024": { label: "2024 – 2025", sub: "6 reads" },
+  "2025": { label: "2025 – 2026", sub: "6 reads · Current year" },
+};
+
+const TAG_LABELS = { short:"Short Story/Stories", hindi:"Hindi", themed:"Themed", nonfiction:"Non-fiction" };
+const TAG_CLASSES = { short:"tag-short", hindi:"tag-hindi", themed:"tag-themed", nonfiction:"tag-nonfiction" };
+
+// ── COVER FETCHING via Open Library search ─────────────────────
+const coverCache = {};
+
+async function fetchCover(title, author, imgEl, placeholderEl) {
+  const key = title + '|' + author;
+  if (coverCache[key]) {
+    if (coverCache[key] !== 'none') applyImg(imgEl, placeholderEl, coverCache[key]);
+    return;
+  }
+  // Use Open Library search to find the book, then get cover
+  const q = encodeURIComponent(title + ' ' + author);
+  try {
+    const res = await fetch(`https://openlibrary.org/search.json?q=${q}&limit=5&fields=cover_i,title`);
+    const data = await res.json();
+    const hit = (data.docs || []).find(d => d.cover_i);
+    if (hit && hit.cover_i) {
+      const url = `https://covers.openlibrary.org/b/id/${hit.cover_i}-M.jpg`;
+      coverCache[key] = url;
+      applyImg(imgEl, placeholderEl, url);
+    } else {
+      coverCache[key] = 'none';
+    }
+  } catch(e) {
+    coverCache[key] = 'none';
+  }
+}
+
+function applyImg(imgEl, placeholderEl, url) {
+  imgEl.src = url;
+  imgEl.onload = () => {
+    imgEl.classList.add('loaded');
+    if (placeholderEl) placeholderEl.style.display = 'none';
+  };
+  imgEl.onerror = () => { /* keep placeholder */ };
+}
+
+// ── RENDER ─────────────────────────────────────────────────────
+function buildCard(book) {
+  const div = document.createElement('div');
+  div.className = 'book-card';
+  div.dataset.era = book.era;
+  div.dataset.title = book.title.toLowerCase();
+  div.dataset.author = book.author.toLowerCase();
+
+  const tagHTML = book.tag
+    ? `<span class="book-tag ${TAG_CLASSES[book.tag]}">${TAG_LABELS[book.tag]}</span>`
+    : '';
+  const dateHTML = book.date ? `<div class="book-date">${book.date}</div>` : '';
+
+  div.innerHTML = `
+    <div class="cover-wrap">
+      <div class="cover-placeholder">
+        <div class="ph-num">${book.n}</div>
+        <div class="ph-title">${book.title}</div>
+      </div>
+      <img alt="${book.title} cover" />
+    </div>
+    <div class="book-info">
+      <div class="book-num">${book.n}</div>
+      <div class="book-title">${book.title}</div>
+      <div class="book-author">${book.author}</div>
+      ${dateHTML}
+      ${tagHTML}
+    </div>`;
+
+  return div;
+}
+
+function renderAll() {
+  const container = document.getElementById('all-eras');
+  const eras = [...new Set(BOOKS.map(b => b.era))];
+  eras.forEach(era => {
+    const section = document.createElement('div');
+    section.className = 'era';
+    section.dataset.era = era;
+    const meta = ERA_META[era];
+    section.innerHTML = `
+      <div class="era-header">
+        <span class="era-title">${meta.label}</span>
+        <span class="era-count">${meta.sub}</span>
+      </div>
+      <div class="book-grid"></div>`;
+    const grid = section.querySelector('.book-grid');
+    BOOKS.filter(b => b.era === era).forEach(book => {
+      grid.appendChild(buildCard(book));
+    });
+    container.appendChild(section);
+  });
+}
+
+// ── LAZY COVER LOADING with IntersectionObserver ───────────────
+function setupLazyCovers() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const card = entry.target;
+        const title = card.querySelector('.book-title').textContent;
+        const author = card.querySelector('.book-author').textContent;
+        const img = card.querySelector('img');
+        const ph = card.querySelector('.cover-placeholder');
+        fetchCover(title, author, img, ph);
+        observer.unobserve(card);
+      }
+    });
+  }, { rootMargin: '200px' });
+  document.querySelectorAll('.book-card').forEach(card => observer.observe(card));
+}
+
+// ── FILTER / SEARCH ────────────────────────────────────────────
+function filterEra(era, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.era').forEach(s => {
+    s.classList.toggle('hidden', era !== 'all' && s.dataset.era !== era);
+  });
+  document.querySelectorAll('.book-card').forEach(c => c.classList.remove('hidden'));
+}
+
+function filterSearch() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.filter-btn').classList.add('active');
+  document.querySelectorAll('.era').forEach(s => s.classList.remove('hidden'));
+  if (!q) {
+    document.querySelectorAll('.book-card').forEach(c => c.classList.remove('hidden'));
+    return;
+  }
+  document.querySelectorAll('.book-card').forEach(card => {
+    const match = card.dataset.title.includes(q) || card.dataset.author.includes(q);
+    card.classList.toggle('hidden', !match);
+  });
+  document.querySelectorAll('.era').forEach(s => {
+    const visible = s.querySelectorAll('.book-card:not(.hidden)').length;
+    s.classList.toggle('hidden', visible === 0);
+  });
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+renderAll();
+setupLazyCovers();
+</script>
+</body>
+</html>
